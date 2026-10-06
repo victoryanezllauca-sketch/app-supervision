@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <title>Gestión de Instalaciones</title>
+  <meta name="description" content="Gestiona las instalaciones y supervisiones de tus trabajadores." />
+
+  <!-- PWA / iOS -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0A84FF" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Instalaciones" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+
+  <style>
+    :root {
+      --blue: #0A84FF;
+      --blue-dark: #0060DF;
+      --green: #30D158;
+      --orange: #FF9F0A;
+      --red: #FF453A;
+      --bg: #F2F2F7;
+      --card: #FFFFFF;
+      --text: #1C1C1E;
+      --text-2: #6C6C70;
+      --text-3: #AEAEB2;
+      --separator: rgba(60, 60, 67, 0.12);
+      --radius: 16px;
+      --shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.4;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== Cabecera ===== */
+    header.app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 12px;
+      background: rgba(242, 242, 247, 0.82);
+      -webkit-backdrop-filter: saturate(180%) blur(18px);
+      backdrop-filter: saturate(180%) blur(18px);
+      border-bottom: 0.5px solid var(--separator);
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .header-title h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+    }
+
+    .header-title .subtitle {
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: var(--text-2);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      font-size: 19px;
+      color: var(--blue);
+      transition: transform 0.08s ease;
+    }
+    .icon-btn:active { transform: scale(0.92); }
+    .icon-btn.on { background: var(--blue); color: #fff; }
+    .icon-btn.hidden { display: none; }
+
+    .reminder-bar {
+      margin-top: 10px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border-radius: 12px;
+      padding: 8px 12px;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    .reminder-bar.visible { display: flex; }
+    .reminder-bar select {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+    }
+
+    /* ===== Contenido ===== */
+    main {
+      padding: 16px 16px calc(24px + var(--safe-bottom));
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin: 4px 4px 10px;
+    }
+    .section-title h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .section-title .count {
+      font-size: 13px;
+      color: var(--text-2);
+      font-weight: 600;
+    }
+
+    /* ===== Formulario ===== */
+    .field { margin-bottom: 12px; }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-2);
+      margin: 0 0 5px 2px;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--separator);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--text);
+      background: #F7F7F9;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .field input:focus,
+    .field textarea:focus {
+      border-color: var(--blue);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+    }
+    .field textarea { resize: vertical; min-height: 72px; }
+
+    /* Selector segmentado de tipo */
+    .segmented {
+      display: flex;
+      background: #F2F2F7;
+      border-radius: 12px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .segmented .seg {
+      flex: 1;
+      border: none;
+      background: transparent;
+      border-radius: 9px;
+      padding: 10px 6px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .segmented .seg.active {
+      background: #fff;
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10);
+    }
+
+    /* Etiqueta de tipo en la lista */
+    .type-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .type-tag.instalacion { background: rgba(10, 132, 255, 0.13); color: var(--blue-dark); }
+    .type-tag.supervision { background: rgba(175, 82, 222, 0.15); color: #8944AB; }
+
+    /* Filtro de tipo */
+    .filter-bar {
+      display: flex;
+      background: #F2F2F7;
+      border-radius: 12px;
+      padding: 3px;
+      gap: 3px;
+      margin-bottom: 12px;
+    }
+    .filter-bar .filter {
+      flex: 1;
+      border: none;
+      background: transparent;
+      border-radius: 9px;
+      padding: 8px 6px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+      white-space: nowrap;
+    }
+    .filter-bar .filter.active {
+      background: #fff;
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.10);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.08s ease, opacity 0.15s ease;
+    }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:active { background: var(--blue-dark); }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 8px; }
+    .btn-row .btn { flex: 1; }
+    .btn-ghost { background: #F2F2F7; color: var(--text); }
+    .btn-danger { background: rgba(255, 69, 58, 0.12); color: var(--red); }
+
+    .form-hint {
+      font-size: 12px;
+      color: var(--text-3);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* ===== Lista de servicios ===== */
+    .service {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      margin-bottom: 10px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .service:active { background: #FAFAFC; }
+    .service.done { opacity: 0.55; }
+
+    .check-btn {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      margin-top: 2px;
+      border-radius: 50%;
+      border: 2px solid #C7C7CC;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: transparent;
+      font-size: 14px;
+      transition: all 0.15s ease;
+    }
+    .check-btn.checked {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+    }
+
+    .service-body { flex: 1; min-width: 0; }
+    .service-body .worker {
+      font-weight: 700;
+      font-size: 16px;
+      margin: 0;
+      word-break: break-word;
+    }
+    .service-body .client {
+      color: var(--text-2);
+      font-size: 14px;
+      margin: 1px 0 0;
+      word-break: break-word;
+    }
+    .service-body .meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .service-body .when {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+    .service-body .notes {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--text-2);
+      background: #F2F2F7;
+      border-radius: 8px;
+      padding: 6px 9px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      display: none;
+    }
+    .service-body .notes.visible { display: block; }
+
+    .badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .badge.today { background: rgba(10, 132, 255, 0.12); color: var(--blue-dark); }
+    .badge.soon { background: rgba(255, 159, 10, 0.15); color: #C93400; }
+    .badge.upcoming { background: rgba(60, 60, 67, 0.08); color: var(--text-2); }
+    .badge.late { background: rgba(255, 69, 58, 0.12); color: var(--red); }
+
+    .badge.now { background: var(--red); color: #fff; }
+    .badge.urgent { background: rgba(255, 149, 0, 0.95); color: #fff; }
+
+    /* Tarjetas urgentes */
+    .service.urgent {
+      border-color: rgba(255, 149, 0, 0.65);
+      background: #FFF7EC;
+      box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.15), var(--shadow);
+    }
+    .service.due-now {
+      border-color: rgba(255, 69, 58, 0.75);
+      background: #FFF0EF;
+      animation: pulse-now 1.6s ease-in-out infinite;
+    }
+    @keyframes pulse-now {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(255, 69, 58, 0.16), var(--shadow); }
+      50% { box-shadow: 0 0 0 7px rgba(255, 69, 58, 0.30), var(--shadow); }
+    }
+
+    /* Banner fijo de urgencia */
+    .banner-urgent {
+      position: sticky;
+      z-index: 19;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, #FF453A, #FF9F0A);
+      box-shadow: 0 8px 24px rgba(255, 69, 58, 0.35);
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    .banner-urgent:active { transform: scale(0.99); }
+    .banner-urgent.amber {
+      background: linear-gradient(135deg, #FF9F0A, #FFC50A);
+      box-shadow: 0 8px 24px rgba(255, 159, 10, 0.35);
+    }
+    .banner-urgent .banner-icon { font-size: 26px; }
+    .banner-urgent .banner-body { flex: 1; min-width: 0; }
+    .banner-urgent .banner-kicker {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      opacity: 0.92;
+    }
+    .banner-urgent .banner-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 1px 0 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .banner-urgent .banner-sub {
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0.95;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .banner-urgent .banner-chevron { font-size: 20px; opacity: 0.9; }
+
+    .toast.reminder {
+      background: linear-gradient(135deg, #FF453A, #FF9F0A);
+      font-weight: 600;
+      font-size: 15px;
+      box-shadow: 0 10px 30px rgba(255, 69, 58, 0.4);
+    }
+
+    .delete-btn {
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      color: var(--text-3);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+    .delete-btn:hover { color: var(--red); background: rgba(255, 69, 58, 0.08); }
+
+    .empty {
+      text-align: center;
+      color: var(--text-3);
+      padding: 32px 16px;
+      font-size: 14px;
+    }
+    .empty .emoji { font-size: 42px; display: block; margin-bottom: 10px; }
+
+    /* ===== Sección completados ===== */
+    .done-section { margin-top: 4px; }
+    .done-toggle {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--text-2);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      padding: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .done-list { display: none; }
+    .done-list.visible { display: block; }
+
+    /* ===== Instalación ===== */
+    .install-card { text-align: center; }
+    .install-card p { margin: 0 0 12px; font-size: 14px; color: var(--text-2); }
+    .install-card .ios-steps {
+      text-align: left;
+      font-size: 13px;
+      color: var(--text-2);
+      margin: 0;
+      padding-left: 18px;
+    }
+    .install-card .ios-steps li { margin-bottom: 6px; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(20px + var(--safe-bottom));
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(28, 28, 30, 0.92);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-size: 14px;
+      max-width: 90%;
+      text-align: center;
+      white-space: pre-line;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 50;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (min-width: 640px) {
+      .header-title h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-top">
+      <div class="header-title">
+        <h1>Instalaciones</h1>
+        <p class="subtitle" id="headerSubtitle">Tus servicios, organizados</p>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="notifBtn" title="Activar alertas" aria-label="Activar notificaciones">🔔</button>
+        <button class="icon-btn hidden" id="installBtn" title="Instalar app" aria-label="Instalar app">⬇️</button>
+      </div>
+    </div>
+    <div class="reminder-bar" id="reminderBar">
+      <span>Avisarme</span>
+      <select id="leadSelect">
+        <option value="15">15 min antes</option>
+        <option value="30" selected>30 min antes</option>
+        <option value="60">1 hora antes</option>
+        <option value="120">2 horas antes</option>
+        <option value="1440">1 día antes</option>
+      </select>
+    </div>
+  </header>
+
+  <main>
+    <div class="banner-urgent" id="urgencyBanner" style="display:none;">
+      <span class="banner-icon">⏰</span>
+      <div class="banner-body">
+        <div class="banner-kicker" id="bannerKicker"></div>
+        <div class="banner-title" id="bannerTitle"></div>
+        <div class="banner-sub" id="bannerSub"></div>
+      </div>
+      <span class="banner-chevron">›</span>
+    </div>
+
+    <!-- Formulario -->
+    <section class="card">
+      <div class="section-title">
+        <h2 id="formTitle">Nuevo servicio</h2>
+      </div>
+      <form id="serviceForm" autocomplete="off">
+        <div class="field">
+          <label for="worker">Trabajador o equipo</label>
+          <input id="worker" name="worker" type="text" placeholder="Ej. Carlos · Equipo 2" required />
+        </div>
+        <div class="field">
+          <label for="client">Cliente / Lugar de instalación</label>
+          <input id="client" name="client" type="text" placeholder="Ej. María G. · Av. Libertad 123" required />
+        </div>
+        <div class="field">
+          <label>Tipo de servicio</label>
+          <div class="segmented" id="typeSegmented">
+            <button type="button" class="seg active" data-type="instalacion">🔧 Instalación</button>
+            <button type="button" class="seg" data-type="supervision">👁 Supervisión</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="datetime">Fecha y hora</label>
+          <input id="datetime" name="datetime" type="datetime-local" required />
+        </div>
+        <div class="field">
+          <label for="notes">Notas rápidas</label>
+          <textarea id="notes" name="notes" placeholder="Materiales, direcciones, accesos, teléfonos…"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" id="submitBtn">➕ Agregar servicio</button>
+        <div class="btn-row" id="editActions" style="display:none;">
+          <button type="button" class="btn btn-danger" id="deleteBtn">🗑 Eliminar</button>
+          <button type="button" class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Próximos servicios -->
+    <section>
+      <div class="section-title">
+        <h2>Próximos</h2>
+        <span class="count" id="upcomingCount"></span>
+      </div>
+      <div class="filter-bar" id="filterBar">
+        <button type="button" class="filter active" data-filter="all">Todas</button>
+        <button type="button" class="filter" data-filter="instalacion">Instalaciones</button>
+        <button type="button" class="filter" data-filter="supervision">Supervisiones</button>
+      </div>
+      <div id="upcomingList"></div>
+    </section>
+
+    <!-- Completados -->
+    <section class="done-section">
+      <button class="done-toggle" id="doneToggle">
+        <span>✔ Completados</span>
+        <span id="doneCount" style="opacity:.7;"></span>
+      </button>
+      <div class="done-list" id="doneList"></div>
+    </section>
+
+    <!-- Instalación -->
+    <section class="card install-card" id="installCard" style="display:none;">
+      <p>Instala esta app en tu pantalla de inicio para usarla como una aplicación.</p>
+      <button type="button" class="btn btn-primary" id="installBtn2" style="display:none;">⬇️ Instalar app</button>
+      <ol class="ios-steps" id="iosSteps" style="display:none;">
+        <li>Toca el botón <strong>Compartir</strong> (⤴️) en Safari.</li>
+        <li>Elige <strong>“Añadir a pantalla de inicio”</strong>.</li>
+        <li>Toca <strong>Añadir</strong>. ¡Listo! 🎉</li>
+      </ol>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* =================== Estado =================== */
+      var STORE_KEY = "instalaciones.servicios.v1";
+      var SETTINGS_KEY = "instalaciones.settings.v1";
+
+      var servicios = [];
+      var settings = { notifEnabled: false, leadMinutes: 30 };
+      var editingId = null;
+      var checkTimer = null;
+      var formType = "instalacion";
+      var currentFilter = "all";
+
+      /* =================== Referencias DOM =================== */
+      var $ = function (id) { return document.getElementById(id); };
+      var form = $("serviceForm");
+      var workerEl = $("worker");
+      var clientEl = $("client");
+      var datetimeEl = $("datetime");
+      var notesEl = $("notes");
+      var submitBtn = $("submitBtn");
+      var editActions = $("editActions");
+      var deleteBtn = $("deleteBtn");
+      var cancelBtn = $("cancelBtn");
+      var formTitle = $("formTitle");
+      var upcomingList = $("upcomingList");
+      var upcomingCount = $("upcomingCount");
+      var doneList = $("doneList");
+      var doneCount = $("doneCount");
+      var doneToggle = $("doneToggle");
+      var notifBtn = $("notifBtn");
+      var reminderBar = $("reminderBar");
+      var leadSelect = $("leadSelect");
+      var installBtn = $("installBtn");
+      var installBtn2 = $("installBtn2");
+      var installCard = $("installCard");
+      var iosSteps = $("iosSteps");
+      var toastEl = $("toast");
+      var headerSubtitle = $("headerSubtitle");
+      var urgencyBanner = $("urgencyBanner");
+      var bannerKicker = $("bannerKicker");
+      var bannerTitle = $("bannerTitle");
+      var bannerSub = $("bannerSub");
+      var appHeader = document.querySelector("header.app-header");
+      var typeSegmented = $("typeSegmented");
+      var filterBar = $("filterBar");
+
+      /* =================== Utilidades =================== */
+      function parseLocal(dtStr) {
+        if (!dtStr) return NaN;
+        var parts = dtStr.split("T");
+        var d = parts[0].split("-").map(Number);
+        var t = (parts[1] || "00:00").split(":").map(Number);
+        return new Date(d[0], d[1] - 1, d[2], t[0], t[1] || 0).getTime();
+      }
+
+      function toLocalInput(ts) {
+        var d = new Date(ts);
+        function pad(n) { return (n < 10 ? "0" : "") + n; }
+        return (
+          d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+          "T" + pad(d.getHours()) + ":" + pad(d.getMinutes())
+        );
+      }
+
+      function formatDate(ts) {
+        var d = new Date(ts);
+        var date = d.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" });
+        var time = d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+        return { date: date, time: time, full: date + " · " + time };
+      }
+
+      var NOW_WINDOW = 60 * 60000;     // 1 hora
+      var URGENT_WINDOW = 120 * 60000; // 2 horas
+
+      function relativeInfo(ts) {
+        var now = Date.now();
+        var startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        var startTomorrow = startOfToday.getTime() + 86400000;
+        var startAfter = startTomorrow + 86400000;
+
+        if (ts < now) return { label: "ATRASADO", cls: "late" };
+        if (ts - now <= NOW_WINDOW) return { label: "¡AHORA!", cls: "now" };
+        if (ts - now <= URGENT_WINDOW) return { label: "MUY PRONTO", cls: "urgent" };
+        if (ts < startTomorrow) return { label: "HOY", cls: "today" };
+        if (ts < startAfter) return { label: "MAÑANA", cls: "soon" };
+
+        var dayMs = 86400000;
+        var days = Math.ceil((ts - startOfToday.getTime()) / dayMs);
+        return { label: "EN " + days + " DÍAS", cls: "upcoming" };
+      }
+
+      function uid() {
+        return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      }
+
+      /* =================== Persistencia =================== */
+      function save() {
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify(servicios));
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        } catch (e) {
+          toast("No se pudo guardar. Revisa el almacenamiento del navegador.");
+        }
+      }
+
+      function load() {
+        try {
+          servicios = JSON.parse(localStorage.getItem(STORE_KEY)) || [];
+          settings = Object.assign({ notifEnabled: false, leadMinutes: 30 }, JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {});
+        } catch (e) {
+          servicios = [];
+          settings = { notifEnabled: false, leadMinutes: 30 };
+        }
+      }
+
+      /* =================== Toast =================== */
+      var toastTimer = null;
+      function toast(msg, kind) {
+        toastEl.textContent = msg;
+        toastEl.classList.toggle("reminder", kind === "reminder");
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, kind === "reminder" ? 5000 : 2600);
+      }
+
+      /* =================== Render =================== */
+      function render() {
+        var allUpcoming = servicios
+          .filter(function (s) { return !s.done; })
+          .sort(function (a, b) { return a.datetime - b.datetime; });
+        var allDone = servicios
+          .filter(function (s) { return s.done; })
+          .sort(function (a, b) { return b.datetime - a.datetime; });
+
+        var urgentCount = allUpcoming.filter(function (s) {
+          return s.datetime > Date.now() && s.datetime - Date.now() <= URGENT_WINDOW;
+        }).length;
+
+        function matchesFilter(s) {
+          return currentFilter === "all" || (s.type || "instalacion") === currentFilter;
+        }
+        var upcoming = allUpcoming.filter(matchesFilter);
+        var done = allDone.filter(matchesFilter);
+
+        upcomingCount.textContent = upcoming.length ? upcoming.length + " servicio" + (upcoming.length !== 1 ? "s" : "") : "";
+        headerSubtitle.textContent = urgentCount
+          ? "⏰ " + urgentCount + (urgentCount === 1 ? " urgente" : " urgentes") + " ahora"
+          : (upcoming.length ? upcoming.length + " próximos" : "Tus servicios, organizados");
+
+        renderList(upcomingList, upcoming, false);
+        renderList(doneList, done, true);
+
+        doneCount.textContent = done.length ? "(" + done.length + ")" : "";
+        doneToggle.style.display = done.length ? "flex" : "none";
+
+        updateUrgencyBanner();
+        updateNotifUI();
+      }
+
+      function renderList(container, items, isDone) {
+        if (!items.length) {
+          container.innerHTML = isDone
+            ? ""
+            : '<div class="empty"><span class="emoji">📋</span>No hay servicios pendientes.<br/>Agrega el primero arriba. 👆</div>';
+          return;
+        }
+
+        var html = items.map(function (s) {
+          var f = formatDate(s.datetime);
+          var rel = isDone ? { label: "REALIZADO", cls: "upcoming" } : relativeInfo(s.datetime);
+          var cardCls = "service";
+          if (isDone) cardCls += " done";
+          else if (rel.cls === "now") cardCls += " due-now";
+          else if (rel.cls === "urgent") cardCls += " urgent";
+          var notesHtml = s.notes && s.notes.trim()
+            ? '<div class="notes visible">' + escapeHtml(s.notes) + "</div>"
+            : "";
+          return (
+            '<div class="' + cardCls + '" data-id="' + s.id + '">' +
+              '<button class="check-btn' + (isDone ? " checked" : "") + '" data-id="' + s.id + '" aria-label="Marcar">✓</button>' +
+              '<div class="service-body">' +
+                '<p class="worker">' + escapeHtml(s.worker) + "</p>" +
+                '<p class="client">' + escapeHtml(s.client) + "</p>" +
+                '<div class="meta">' + typeTag(s) + '<span class="when">🗓 ' + f.full + '</span><span class="badge ' + rel.cls + '">' + rel.label + "</span></div>" +
+                notesHtml +
+              "</div>" +
+              '<button class="delete-btn" data-id="' + s.id + '" aria-label="Eliminar">✕</button>' +
+            "</div>"
+          );
+        }).join("");
+
+        container.innerHTML = html;
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function typeTag(s) {
+        var t = s.type === "supervision" ? "supervision" : "instalacion";
+        return '<span class="type-tag ' + t + '">' + (t === "supervision" ? "👁 Supervisión" : "🔧 Instalación") + "</span>";
+      }
+
+      /* =================== Banner de urgencia =================== */
+      function mostUrgent() {
+        var now = Date.now();
+        return servicios
+          .filter(function (s) { return !s.done && s.datetime > now && s.datetime - now <= URGENT_WINDOW; })
+          .sort(function (a, b) { return a.datetime - b.datetime; })[0] || null;
+      }
+
+      function countdown(ts) {
+        var mins = Math.max(1, Math.round((ts - Date.now()) / 60000));
+        if (mins < 60) return "en " + mins + " min";
+        var h = Math.floor(mins / 60);
+        var m = mins % 60;
+        return "en " + h + " h" + (m ? " " + m + " min" : "");
+      }
+
+      function updateUrgencyBanner() {
+        var s = mostUrgent();
+        if (!s) {
+          urgencyBanner.style.display = "none";
+          return;
+        }
+        var isNow = (s.datetime - Date.now()) <= NOW_WINDOW;
+        urgencyBanner.className = "banner-urgent" + (isNow ? "" : " amber");
+        urgencyBanner.style.display = "flex";
+        bannerKicker.textContent = isNow ? "¡Servicio ahora!" : "Próximo servicio";
+        bannerTitle.textContent = s.worker;
+        bannerSub.textContent = s.client + " · " + countdown(s.datetime);
+        urgencyBanner.onclick = function () { startEdit(s.id); };
+      }
+
+      function updateBannerOffset() {
+        if (appHeader) urgencyBanner.style.top = appHeader.offsetHeight + "px";
+      }
+
+      /* =================== Formulario =================== */
+      function setFormType(type) {
+        formType = type;
+        var segs = typeSegmented.querySelectorAll(".seg");
+        segs.forEach(function (btn) {
+          btn.classList.toggle("active", btn.getAttribute("data-type") === type);
+        });
+      }
+
+      function resetForm() {
+        editingId = null;
+        form.reset();
+        setFormType("instalacion");
+        formTitle.textContent = "Nuevo servicio";
+        submitBtn.textContent = "➕ Agregar servicio";
+        editActions.style.display = "none";
+        datetimeEl.value = defaultDatetime();
+      }
+
+      function defaultDatetime() {
+        var d = new Date(Date.now() + 3600000); // por defecto, dentro de 1 hora
+        d.setMinutes(0, 0, 0);
+        return toLocalInput(d.getTime());
+      }
+
+      function startEdit(id) {
+        var s = servicios.find(function (x) { return x.id === id; });
+        if (!s) return;
+        editingId = id;
+        workerEl.value = s.worker;
+        clientEl.value = s.client;
+        datetimeEl.value = toLocalInput(s.datetime);
+        notesEl.value = s.notes || "";
+        setFormType(s.type || "instalacion");
+        formTitle.textContent = "Editar servicio";
+        submitBtn.textContent = "💾 Guardar cambios";
+        editActions.style.display = "flex";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        workerEl.focus();
+      }
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var dt = parseLocal(datetimeEl.value);
+        if (isNaN(dt)) { toast("Elige una fecha y hora válidas."); return; }
+
+        var data = {
+          worker: workerEl.value.trim(),
+          client: clientEl.value.trim(),
+          type: formType,
+          datetime: dt,
+          notes: notesEl.value.trim(),
+          done: false,
+          notified: false
+        };
+
+        if (!data.worker || !data.client) { toast("Completa trabajador y cliente."); return; }
+
+        if (editingId) {
+          var s = servicios.find(function (x) { return x.id === editingId; });
+          if (s) {
+            var changed = s.datetime !== dt;
+            Object.assign(s, data, { id: editingId, notified: changed ? false : s.notified });
+            toast("Servicio actualizado ✔");
+          }
+        } else {
+          servicios.push(Object.assign({ id: uid() }, data));
+          toast("Servicio agregado ✔");
+        }
+
+        save();
+        resetForm();
+        render();
+      });
+
+      deleteBtn.addEventListener("click", function () {
+        if (editingId && confirm("¿Eliminar este servicio?")) {
+          servicios = servicios.filter(function (x) { return x.id !== editingId; });
+          save();
+          resetForm();
+          render();
+          toast("Servicio eliminado");
+        }
+      });
+
+      cancelBtn.addEventListener("click", resetForm);
+
+      typeSegmented.addEventListener("click", function (e) {
+        var btn = e.target.closest(".seg");
+        if (!btn) return;
+        setFormType(btn.getAttribute("data-type"));
+      });
+
+      filterBar.addEventListener("click", function (e) {
+        var btn = e.target.closest(".filter");
+        if (!btn) return;
+        currentFilter = btn.getAttribute("data-filter");
+        filterBar.querySelectorAll(".filter").forEach(function (b) {
+          b.classList.toggle("active", b === btn);
+        });
+        render();
+      });
+
+      /* =================== Acciones de lista (delegación) =================== */
+      function onListClick(e) {
+        var target = e.target;
+        var id = target.getAttribute && target.getAttribute("data-id");
+
+        if (target.classList.contains("check-btn")) {
+          var s = servicios.find(function (x) { return x.id === id; });
+          if (s) { s.done = !s.done; save(); render(); }
+          return;
+        }
+        if (target.classList.contains("delete-btn")) {
+          if (confirm("¿Eliminar este servicio?")) {
+            servicios = servicios.filter(function (x) { return x.id !== id; });
+            if (editingId === id) resetForm();
+            save();
+            render();
+            toast("Servicio eliminado");
+          }
+          return;
+        }
+        // Tocar la tarjeta → editar
+        var card = target.closest(".service");
+        if (card && card.getAttribute("data-id")) {
+          var sid = card.getAttribute("data-id");
+          var svc = servicios.find(function (x) { return x.id === sid; });
+          if (svc && !svc.done) startEdit(sid);
+        }
+      }
+      upcomingList.addEventListener("click", onListClick);
+      doneList.addEventListener("click", onListClick);
+
+      doneToggle.addEventListener("click", function () {
+        doneList.classList.toggle("visible");
+      });
+
+      /* =================== Notificaciones / Alertas =================== */
+      function notificationsSupported() {
+        return "Notification" in window;
+      }
+
+      function updateNotifUI() {
+        var granted = notificationsSupported() && Notification.permission === "granted";
+        notifBtn.classList.toggle("on", granted && settings.notifEnabled);
+        notifBtn.title = granted ? "Alertas activadas" : "Activar alertas";
+        reminderBar.classList.add("visible"); // el aviso interno usa este tiempo siempre
+      }
+
+      async function enableNotifications() {
+        if (!notificationsSupported()) {
+          toast("Tu navegador no soporta notificaciones. Usa Chrome o una PWA instalada.");
+          return;
+        }
+        if (Notification.permission === "denied") {
+          toast("Notificaciones bloqueadas. Actívalas en los ajustes del navegador.");
+          return;
+        }
+        try {
+          var perm = await Notification.requestPermission();
+          if (perm === "granted") {
+            settings.notifEnabled = true;
+            save();
+            updateNotifUI();
+            toast("Alertas activadas 🔔");
+            startChecker();
+          } else {
+            toast("No se concedió el permiso.");
+          }
+        } catch (err) {
+          toast("No se pudo activar. Recuerda: en iPhone deben abrir la app desde la pantalla de inicio.");
+        }
+      }
+
+      function startChecker() {
+        stopChecker();
+        checkTimer = setInterval(checkReminders, 15000); // revisa cada 15 s
+        checkReminders();
+      }
+
+      function stopChecker() {
+        if (checkTimer) { clearInterval(checkTimer); checkTimer = null; }
+      }
+
+      function checkReminders() {
+        var now = Date.now();
+        var changed = false;
+
+        servicios.forEach(function (s) {
+          if (s.done || s.notified) return;
+          if (s.datetime <= now) return; // ya pasó
+          var diff = s.datetime - now;
+          if (diff <= settings.leadMinutes * 60000) {
+            s.notified = true;
+            changed = true;
+            remindInApp(s);   // aviso interno (siempre, con la app abierta)
+            notifySystem(s);  // notificación del sistema (solo si hay permiso)
+          }
+        });
+
+        if (changed) { save(); render(); }
+      }
+
+      function remindInApp(s) {
+        var f = formatDate(s.datetime);
+        toast("⏰ " + s.worker + " · " + f.time + "\n" + s.client, "reminder");
+      }
+
+      function notifySystem(s) {
+        if (!notificationsSupported() || Notification.permission !== "granted") return;
+        if (!settings.notifEnabled) return;
+
+        var f = formatDate(s.datetime);
+        var title = "⏰ " + s.worker + " · " + f.time;
+        var body = s.client + (s.notes ? "\n" + s.notes : "");
+        var opts = {
+          body: body,
+          icon: "icons/icon-192.png",
+          badge: "icons/icon-192.png",
+          tag: "servicio-" + s.id
+        };
+
+        try {
+          if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(function (reg) {
+              reg.showNotification(title, opts);
+            });
+          } else {
+            var n = new Notification(title, opts);
+            n.onclick = function () { window.focus(); n.close(); };
+          }
+        } catch (err) {
+          /* sin notificación de sistema disponible */
+        }
+      }
+
+      notifBtn.addEventListener("click", enableNotifications);
+      leadSelect.addEventListener("change", function () {
+        settings.leadMinutes = parseInt(leadSelect.value, 10);
+        save();
+      });
+
+      /* =================== Instalación (PWA) =================== */
+      var deferredPrompt = null;
+
+      function detectIos() {
+        return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      }
+
+      function showInstallUI() {
+        if (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone) {
+          installCard.style.display = "none";
+          return;
+        }
+        installCard.style.display = "block";
+        if (detectIos()) {
+          iosSteps.style.display = "block";
+          installBtn2.style.display = "none";
+          installBtn.classList.add("hidden");
+        } else if (deferredPrompt) {
+          installBtn.classList.remove("hidden");
+          installBtn2.style.display = "inline-flex";
+          iosSteps.style.display = "none";
+        }
+      }
+
+      function installApp() {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function () { deferredPrompt = null; });
+        }
+      }
+
+      window.addEventListener("beforeinstallprompt", function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        showInstallUI();
+      });
+
+      window.addEventListener("appinstalled", function () {
+        installCard.style.display = "none";
+        installBtn.classList.add("hidden");
+        toast("¡App instalada! 🎉");
+      });
+
+      installBtn.addEventListener("click", installApp);
+      installBtn2.addEventListener("click", installApp);
+
+      /* =================== Service Worker =================== */
+      function registerSW() {
+        if ("serviceWorker" in navigator && location.protocol === "https:") {
+          navigator.serviceWorker.register("sw.js").catch(function (err) {
+            console.warn("Service Worker no registrado:", err);
+          });
+        }
+      }
+
+      /* =================== Inicio =================== */
+      load();
+      resetForm();
+      render();
+      updateBannerOffset();
+      showInstallUI();
+      registerSW();
+      if (notificationsSupported() && Notification.permission === "granted") {
+        settings.notifEnabled = true;
+      }
+      updateNotifUI();
+      startChecker();
+
+      window.addEventListener("resize", updateBannerOffset);
+      window.addEventListener("orientationchange", function () { setTimeout(updateBannerOffset, 150); });
+    })();
+  </script>
+</body>
+</html>
