@@ -29,7 +29,7 @@ Necesitas servirse por **HTTPS** para que el service worker y la instalación fu
 npx serve .
 ```
 
-O abre la carpeta en **VS Code** con la extensión **Live Server**. Abrir `index.html` directamente (doble clic) funciona para ver la app, pero las funciones PWA no se activan.
+O abre la carpeta en **VS Code** con la extensión **Live Server**. Abrir `index.html` directamente (doble clic) funciona para ver la app, pero las funciones PWA no se activan.https://github.com/victoryanezllauca-sketch/app-supervision/blob/main/README.md
 
 ## Publicar en GitHub Pages
 
@@ -46,7 +46,7 @@ https://TU_USUARIO.github.io/NOMBRE_DEL_REPO/
 
 ## Instalar en iPhone (Safari)
 
-1. Abre la URL en **Safari**.
+1. Abre la URL enn **Safari**.
 2. Toca **Compartir (⤴️) → Añadir a pantalla de inicio**.
 3. Toca **Añadir**. ¡Listo! Aparecerá con su icono en la pantalla de inicio.
 
